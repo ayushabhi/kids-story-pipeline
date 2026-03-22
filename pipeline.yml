@@ -1,0 +1,85 @@
+name: Kids Story Pipeline
+
+on:
+  # Run automatically every Tuesday and Friday at 8 AM UTC
+  schedule:
+    - cron: "0 8 * * 2,5"
+
+  # Allow manual trigger with optional theme
+  workflow_dispatch:
+    inputs:
+      theme:
+        description: "Story theme (leave blank for random)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Dry run (skip images + YouTube upload)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+jobs:
+  generate-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      # ── Setup ─────────────────────────────────────────────────────────
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install system dependencies (ffmpeg + ImageMagick)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
+          # Allow ImageMagick to work with all file types (needed by MoviePy)
+          sudo sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── Run pipeline ───────────────────────────────────────────────────
+      - name: Run Kids Story Pipeline
+        env:
+          ANTHROPIC_API_KEY:        ${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY:       ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID:      ${{ secrets.ELEVENLABS_VOICE_ID }}
+          REPLICATE_API_TOKEN:      ${{ secrets.REPLICATE_API_TOKEN }}
+          YOUTUBE_CREDENTIALS_JSON: ${{ secrets.YOUTUBE_CREDENTIALS_JSON }}
+          OUTPUT_DIR:               "output"
+        run: |
+          cd pipeline
+          THEME="${{ github.event.inputs.theme }}"
+          DRY="${{ github.event.inputs.dry_run }}"
+
+          CMD="python main.py"
+          [ -n "$THEME" ] && CMD="$CMD --theme \"$THEME\""
+          [ "$DRY" = "true" ] && CMD="$CMD --dry-run"
+
+          echo "Running: $CMD"
+          eval $CMD
+
+      # ── Upload artifacts (keep videos for 7 days) ──────────────────────
+      - name: Upload output videos as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: story-videos-${{ github.run_number }}
+          path: output/
+          retention-days: 7
+
+      # ── Notify on failure ──────────────────────────────────────────────
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Pipeline failed on run ${{ github.run_number }}"
+          echo "Check the logs above for details."
