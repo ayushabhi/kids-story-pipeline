@@ -6,6 +6,9 @@ Output: 1920x1080 long-form MP4 + 1080x1920 Shorts MP4s
 
 import os
 import numpy as np
+import PIL.Image
+if not hasattr(PIL.Image, "ANTIALIAS"):
+    PIL.Image.ANTIALIAS = 1  # 1 is the integer value for LANCZOS
 from PIL import Image as PILImage
 import whisper
 from moviepy.editor import (
@@ -13,11 +16,6 @@ from moviepy.editor import (
     TextClip, CompositeVideoClip
 )
 from utils import logger
-
-# Patch PIL.ANTIALIAS before MoviePy uses it internally anywhere else
-import PIL.Image
-if not hasattr(PIL.Image, "ANTIALIAS"):
-    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 
 LONG_FORM_SIZE = (1920, 1080)
 SHORTS_SIZE    = (1080, 1920)
