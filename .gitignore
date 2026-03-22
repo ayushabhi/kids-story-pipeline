@@ -20,3 +20,8 @@ Thumbs.db
 # Other
 *.log
 *.sqlite
+
+# Secrets and Configs
+client_secrets.json
+youtube_credentials.json
+client_secret_*.json
