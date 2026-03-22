@@ -13,13 +13,10 @@ from moviepy.editor import (
     TextClip, CompositeVideoClip
 )
 
-# ULTIMATE PATCH: Forcefully inject ANTIALIAS into the MoviePy namespace directly
+# Forcefully inject ANTIALIAS into the PIL namespace directly as a fallback
 import PIL.Image
 if not hasattr(PIL.Image, "ANTIALIAS"):
     PIL.Image.ANTIALIAS = 1
-import moviepy.video.fx.all.resize
-if hasattr(moviepy.video.fx.all.resize, "Image") and not hasattr(moviepy.video.fx.all.resize.Image, "ANTIALIAS"):
-    moviepy.video.fx.all.resize.Image.ANTIALIAS = 1
 from utils import logger
 
 LONG_FORM_SIZE = (1920, 1080)
