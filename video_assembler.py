@@ -5,6 +5,9 @@ Output: 1920x1080 long-form MP4 + 1080x1920 Shorts MP4s
 """
 
 import os
+import PIL.Image
+if not hasattr(PIL.Image, 'ANTIALIAS'):
+    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 import json
 import subprocess
 import whisper
