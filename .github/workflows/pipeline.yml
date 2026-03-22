@@ -55,7 +55,7 @@ jobs:
           ELEVENLABS_VOICE_ID:      ${{ secrets.ELEVENLABS_VOICE_ID }}
           REPLICATE_API_TOKEN:      ${{ secrets.REPLICATE_API_TOKEN }}
           YOUTUBE_CREDENTIALS_JSON: ${{ secrets.YOUTUBE_CREDENTIALS_JSON }}
-          OUTPUT_DIR:               "output"
+          OUTPUT_DIR:               ${{ github.workspace }}/output
         run: |
           THEME="${{ github.event.inputs.theme }}"
           DRY="${{ github.event.inputs.dry_run }}"
